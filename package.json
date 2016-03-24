@@ -1,0 +1,30 @@
+{
+  "name": "sleeper_agent_bot",
+  "version": "0.1.1",
+  "description": "Bot for The Division Discord Channel",
+  "maintainers": [],
+  "author": "Dennis van den Berg",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/dlvandenberg/discord-bot.git"
+  },
+  "license": "GPL-3.0",
+  "dependencies": {
+    "discord.js": "<=5.2.x",
+    "npm": ""
+  },
+  "main": "sleeper_agent_bot.js",
+  "bugs": {
+    "url": "https://github.com/dlvandenberg/discord-bot/issues"
+  },
+  "homepage": "https://github.com/dlvandenberg/discord-bot#readme",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "division"
+  ]
+}
