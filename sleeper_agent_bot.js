@@ -110,6 +110,15 @@ var commands =
 			regOrUpdate(bot, msg, suffix);
 		}
 	},
+	"update":
+	{
+		usage: "<platform> <id> <level> <rank>",
+		description: "update your ID for a certain platform [ps4, pc, xbox]",
+		process: function (bot, msg, suffix)
+		{
+			regOrUpdate(bot, msg, suffix);
+		}
+	},
 	"list":
 	{
 		usage: "<platform>",
@@ -137,13 +146,31 @@ var commands =
 			}
 		}
 	},
-	"update":
+	"remove":
 	{
-		usage: "<platform> <id> <level> <rank>",
-		description: "update your ID for a certain platform [ps4, pc, xbox]",
+		usage: "<platform>",
+		description: "remove your ID for a certain platform [ps4, pc, xbox]",
 		process: function (bot, msg, suffix)
 		{
-			regOrUpdate(bot, msg, suffix);
+			var user = msg.author;
+			var suffixes = suffix.split(" ");
+			if (suffixes.length === 1)
+			{
+				var platform = suffixes[0];
+				var list = getListOfPlatform(platform);
+
+				if (list != null)
+				{
+					console.log("removing user " + user.id + " from " + platform + "list");
+					removeFromList(list, msg.channel, platform, user);
+				} else
+				{
+					printUsage(msg.channel, "remove");
+				}
+			} else
+			{
+				printUsage(msg.channel, "remove");
+			}
 		}
 	}
 }
@@ -267,6 +294,20 @@ var addToList = function (list, channel, platform, user, isUpdate)
 			bot.sendMessage(channel, "you are not in the list. Perhaps you want to `!register` first?");
 		else
 			bot.sendMessage(channel, "you are already in the list. Perhaps you want to `!update` your data?");
+	}
+};
+
+var removeFromList = function (list, channel, platform, user)
+{
+	if (listContainsUser(list, user))
+	{
+		var idx = _.findIndex(list.users, {id: user.id});
+		list.users.splice(idx, 1);
+		saveList(platform, list);
+		bot.sendMessage(channel, "succesfully removed you from the " + platform + " list, <@" + user.id + ">!");
+	} else
+	{
+		bot.sendMessage(channel, "you are not in the list, relax!");
 	}
 };
 
