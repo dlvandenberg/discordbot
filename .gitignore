@@ -1,0 +1,14 @@
+# Logs
+.logs
+
+# NodeJS dependencies
+node_modules
+
+# Config files
+auth.json
+permissions.json
+
+# Data storage files
+ps4.json
+xbox.json
+pc.json
