@@ -107,36 +107,7 @@ var commands =
 		description: "register your ID for a certain platform [ps4, pc, xbox]",
 		process: function (bot, msg, suffix)
 		{
-			var user = msg.author;
-			var suffixes = suffix.split(" ");
-			if (suffixes.length === 4)
-			{
-				var platform = suffixes[0];
-				var id = suffixes[1];
-				var level = suffixes[2];
-				var rank = suffixes[3];
-
-				var list = getListOfPlatform(platform);
-
-				if (list != null)
-				{
-					var userobj = {
-						"id": user.id,
-						"data": {
-							"nickname": id,
-							"level": level,
-							"rank": rank,
-						}
-					};
-					addToList(list, msg.channel, platform, userobj);
-				} else
-				{
-					printUsage(msg.channel, "register");
-				}
-			} else
-			{
-				printUsage(msg.channel, "register");
-			}
+			regOrUpdate(bot, msg, suffix);
 		}
 	},
 	"list":
@@ -165,8 +136,52 @@ var commands =
 				printUsage(msg.channel, "list");
 			}
 		}
+	},
+	"update":
+	{
+		usage: "<platform> <id> <level> <rank>",
+		description: "update your ID for a certain platform [ps4, pc, xbox]",
+		process: function (bot, msg, suffix)
+		{
+			regOrUpdate(bot, msg, suffix);
+		}
 	}
 }
+
+var regOrUpdate = function(bot, msg, suffix)
+{
+	var cmdTxt = msg.content.split(" ")[0].substring(1);
+	var user = msg.author;
+	var suffixes = suffix.split(" ");
+	if (suffixes.length === 4)
+	{
+		var platform = suffixes[0];
+		var id = suffixes[1];
+		var level = suffixes[2];
+		var rank = suffixes[3];
+
+		var list = getListOfPlatform(platform);
+
+		if (list != null)
+		{
+			var userobj = {
+				"id": user.id,
+				"data": {
+					"nickname": id,
+					"level": level,
+					"rank": rank,
+				}
+			};
+			addToList(list, msg.channel, platform, userobj, cmdTxt === "update");
+		} else
+		{
+			printUsage(msg.channel, cmdTxt);
+		}
+	} else
+	{
+		printUsage(msg.channel, cmdTxt);
+	}
+};
 
 var printList = function (channel, list, platform)
 {
@@ -230,16 +245,28 @@ var saveList = function (platform, list)
 	}
 };
 
-var addToList = function (list, channel, platform, user)
+var addToList = function (list, channel, platform, user, isUpdate)
 {
-	if (!listContainsUser(list, user))
+	if (!isUpdate && !listContainsUser(list, user))
 	{
 		list.users.push(user);
 		saveList(platform, list);
 		bot.sendMessage(channel, "succesfully added you to the " + platform + " list <@" + user.id + ">!");
+	} else if (isUpdate && listContainsUser(list, user))
+	{
+		var idx = _.findIndex(list.users, {id: user.id});
+		console.log("index for id: " + user.id + " : " + idx);
+		list.users[idx].data.nickname = user.data.nickname;
+		list.users[idx].data.level = user.data.level;
+		list.users[idx].data.rank = user.data.rank;
+		saveList(platform, list);
+		bot.sendMessage(channel, "succesfully updated your information, <@" + user.id + ">!");
 	} else
 	{
-		bot.sendMessage(channel, "you are already in the list. Perhaps you want to `!update` your data?");
+		if (isUpdate)
+			bot.sendMessage(channel, "you are not in the list. Perhaps you want to `!register` first?");
+		else
+			bot.sendMessage(channel, "you are already in the list. Perhaps you want to `!update` your data?");
 	}
 };
 
