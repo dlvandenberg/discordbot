@@ -19,6 +19,27 @@ try
 	process.exit();
 }
 
+// Get data storage objects
+try
+{
+	var Ps4_list = require("./ps4.json");
+	var Pc_list = require("./pc.json");
+	var Xbox_list = require("./xbox.json");
+} catch (e)
+{
+	console.log(e.stack);
+	console.log("Please create an empty json object for the given platform.")
+	process.exit();
+}
+
+// Load fs
+try {
+	var fs = require("fs");
+} catch (e)
+{
+	console.log("Cannot find required module: fs");
+}
+
 // Load custom permissions.
 var Permissions = {};
 try 
@@ -64,8 +85,7 @@ try
 	Config.respondToInvalid = false;
 }
 
-var aliases;
-var messagebox;
+var _ = require('underscore');
 
 var commands = 
 {
@@ -141,17 +161,19 @@ var commands =
 
 var printList = function (channel, list, platform)
 {
-	if (list.length > 0)
+	if (list.users.length > 0)
 	{
 		bot.sendMessage(channel, "Current players known for " + platform + ":", function()
 			{			
-				var msg = "**user\t\t\t\tnickname**";
-				for (user in list)
+				var msg = "**user - nickname - level - dz rank**";
+				for (user in list.users)
 				{
-					var id = "*" + list[user].id + "*";
-					var nickname = "*" + list[user].nickname + "*";
+					var userid = "*<@" + list.users[user].id + ">*";
+					var nickname = "*" + list.users[user].data.nickname + "*";
+					var level = "*" + list.users[user].data.level + "*";
+					var rank = "*" + list.users[user].data.rank + "*";
 					
-					msg += "\n" + id + "\t" + nickname;
+					msg += "\n" + userid + " - " + nickname + " - " + level + " - " + rank;
 				}
 
 				bot.sendMessage(channel, msg);
@@ -162,46 +184,39 @@ var printList = function (channel, list, platform)
 	}
 };
 
-var listContainsUser = function (list, id)
-{
-	if (list.length != 0)
-	{
-		for (usr in list)
-		{
-			console.log("checking id " + id + "with user in list : " + list[usr].id);
-			if (list[usr].id === id)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-};
-
 var getListOfPlatform = function (platform)
 {
-	var list;
-	switch(platform)
+	if (platform === "ps4" || platform === "pc" || platform === "xbox")
 	{
-		case "ps4":
-			list = ps4Users;
-			break;
-		case "pc":
-			list = pcUsers;
-			break;
-		case "xbox":
-			list = x1Users;
-			break;
-	};
-	return list;
+		var file = fs.readFileSync(platform + ".json");
+		return JSON.parse(file);
+	}
+	return null;
 };
 
-var addToList = function (list, channel, user, platform, id)
+var saveList = function (platform, list)
 {
-	var userObject = new User(user, id, platform, 30, 50);
+	if (platform === "ps4" || platform === "pc" || platform === "xbox")
+	{
+		var content = JSON.stringify(list);
+		fs.writeFileSync(platform + ".json", content);
+	}
+};
+
+var addToList = function (list, channel, user, platform, nickname)
+{
 	if (!listContainsUser(list, user))
 	{
-		list.push(userObject);
+		var userobj = {
+			"id": user.id,
+			"data": {
+				"nickname": nickname,
+				"level": 30,
+				"rank": 24,
+			}
+		};
+		list.users.push(userobj);
+		saveList(platform, list);
 		bot.sendMessage(channel, "succesfully added you to the " + platform + " list " + user + "!");
 	} else
 	{
@@ -209,17 +224,9 @@ var addToList = function (list, channel, user, platform, id)
 	}
 };
 
-var ps4Users = [];
-var pcUsers = [];
-var x1Users = [];
-
-function User (id, nickname, platform, level, rank)
+var listContainsUser = function (list, user)
 {
-	this.id = id;
-	this.nickname = nickname;
-	this.platform = platform;
-	this.level = level;
-	this.rank = rank;
+	return _.findWhere(list.users, {id: user.id}) != null;
 };
 
 // Bot code
