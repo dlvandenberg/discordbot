@@ -103,23 +103,32 @@ var commands =
 	},
 	"register":
 	{
-		usage: "<platform> <id>",
+		usage: "<platform> <id> <level> <rank>",
 		description: "register your ID for a certain platform [ps4, pc, xbox]",
 		process: function (bot, msg, suffix)
 		{
 			var user = msg.author;
 			var suffixes = suffix.split(" ");
-			if (suffixes.length === 2)
+			if (suffixes.length === 4)
 			{
 				var platform = suffixes[0];
 				var id = suffixes[1];
+				var level = suffixes[2];
+				var rank = suffixes[3];
 
 				var list = getListOfPlatform(platform);
 
 				if (list != null)
 				{
-					addToList(list, msg.channel, user, platform, id);
-					console.log("platform: " + platform + ", id: " + id);
+					var userobj = {
+						"id": user.id,
+						"data": {
+							"nickname": id,
+							"level": level,
+							"rank": rank,
+						}
+					};
+					addToList(list, msg.channel, platform, userobj);
 				} else
 				{
 					printUsage(msg.channel, "register");
@@ -165,7 +174,7 @@ var printList = function (channel, list, platform)
 	{
 		bot.sendMessage(channel, "Current players known for " + platform + ":", function()
 			{			
-				var msg = "**user - nickname - level - dz rank**";
+				var msg = "**User - " + getPlatformIDType(platform) + " - Level - DZ Rank**";
 				for (user in list.users)
 				{
 					var userid = "*<@" + list.users[user].id + ">*";
@@ -183,6 +192,24 @@ var printList = function (channel, list, platform)
 		bot.sendMessage(channel, "there are no players registered for this platform. See `!register`.");
 	}
 };
+
+var getPlatformIDType = function (platform)
+{
+	var idtype;
+	switch (platform)
+	{
+		case "ps4":
+			idtype = "PSN ID";
+			break;
+		case "xbox":
+			idtype = "Gamertag";
+			break;
+		case "pc":
+			idtype = "Uplay ID";
+			break;
+	}
+	return idtype;
+}
 
 var getListOfPlatform = function (platform)
 {
@@ -203,24 +230,16 @@ var saveList = function (platform, list)
 	}
 };
 
-var addToList = function (list, channel, user, platform, nickname)
+var addToList = function (list, channel, platform, user)
 {
 	if (!listContainsUser(list, user))
 	{
-		var userobj = {
-			"id": user.id,
-			"data": {
-				"nickname": nickname,
-				"level": 30,
-				"rank": 24,
-			}
-		};
-		list.users.push(userobj);
+		list.users.push(user);
 		saveList(platform, list);
-		bot.sendMessage(channel, "succesfully added you to the " + platform + " list " + user + "!");
+		bot.sendMessage(channel, "succesfully added you to the " + platform + " list <@" + user.id + ">!");
 	} else
 	{
-		bot.sendMessage(channel, "you are already in the list. Perhaps you want to update your data?");
+		bot.sendMessage(channel, "you are already in the list. Perhaps you want to `!update` your data?");
 	}
 };
 
